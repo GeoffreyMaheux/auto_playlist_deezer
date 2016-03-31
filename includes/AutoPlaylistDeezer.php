@@ -25,8 +25,7 @@ class AutoPlaylistDeezer {
     // We take the artist ID.
     $deezerEmbed->getListArtistId($name);
 
-    // For the moment we take the first item of result.
-    // @TODO maybe create a form step that propose to the user to select which artist he wants to take.
+    // For the moment we take the first item of result @see README.md.
     $this->extractFirstArtistId($deezerEmbed);
 
     if (!empty($this->artistId)) {

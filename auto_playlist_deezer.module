@@ -194,7 +194,6 @@ function auto_playlist_deezer_field_widget_settings_form($field, $instance) {
       );
 
       // Deezer configuration size. By default medium.
-      // @TODO create the options list with the value of format.
       $element['auto_playlist_deezer']['embed_configuration']['size'] = array(
         '#type' => 'select',
         '#title' => t('The layout size of the widget'),
@@ -1102,7 +1101,6 @@ function auto_playlist_deezer_get_deezer_value($value, $settings) {
   }
   elseif (is_string($value)) {
     $embed_deezer->getTopTracksListByArtistName($value);
-    // @TODO run the api to retrieve the ID before to extract the tracks.
   }
   else {
     // @TODO set an error message that say the data to search is not an numeric or string type.

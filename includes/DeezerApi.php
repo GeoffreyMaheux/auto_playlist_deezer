@@ -105,12 +105,10 @@ class DeezerApi {
       }
       $arguments['id'] = implode(',', $trackList);
 
-      // Only for test
-      // @TODO app_id come from configuration form of this module.
+      // Only for test @see README.md.
       $arguments['app_id'] = 1;
 
-      // Only for the test.
-      // @TODO This part need to be set in admin config of module. Not in instance.
+      // Only for the test @see README.md.
       $iframe_config['scrolling'] = 'no';
       $iframe_config['frameborder'] = 0;
       $iframe_config['allowTransparency'] = true;
