@@ -9,10 +9,11 @@
 class DeezerApi {
 
   public function __construct() {
-    // @TODO to create the url we need to know if we want to use http or https.
-    // @TODO Arguments of url are creating by all method. each method can use the appropriate argument.
-    // @TODO a part of setting is used to set the parameters of url like limit=10 in the call method.
-    // @TODO settings need to be a properties of DeezerApi Class and the name of properties need to be like the Deezer parameters name.
+    $this->iframe = '';
+    $this->srcParameters = '';
+    $this->iframeParameters = '';
+    $this->trackList = NULL;
+    $this->listArtistId = NULL;
   }
 
   protected function call($data) {
@@ -67,20 +68,20 @@ class DeezerApi {
     return $response;
   }
 
-  public function getArtistID($name) {
-    // http://api.deezer.com/search/artist?q=Lenorman
-    // http://api.deezer.com/search/artist?q=NAME_ARTIST
-
-    // For the moment we take the first item of result.
-    // @TODO maybe create a form step that propose to the user to select which artist he wants to take.
-
-    $test = 0;
+  public function getListArtistId($name) {
+    $data = array(
+      'type' => 'GET',
+      'url' => 'https://api.deezer.com/search/artist',
+      'arguments' => array(
+        'q' => $name,
+      ),
+      'encodeData' => FALSE,
+      'returnHeaders' => FALSE,
+    );
+    $this->listArtistId = $this->call($data);
   }
 
   public function getTopTrackList($id, $limit) {
-    // http://api.deezer.com/artist/4674/top?limit=20
-    // http://api.deezer.com/artist/ID_ARTIST/top?limit=20
-
     $data = array(
       'type' => 'GET',
       'url' => 'https://api.deezer.com/artist/' . $id . '/top',
@@ -92,20 +93,52 @@ class DeezerApi {
     );
 
     $this->trackList = $this->call($data);
-    $test = 0;
   }
 
   public function getEmbedPlaylist($embedSettings, $trackList) {
-    // http://www.deezer.com/plugins/player?format=classic&autoplay=true&playlist=true&width=700&height=350&color=007FEB&layout=dark&size=medium&type=tracks&id=2711991,1041861,65525990,17199746,17199748,17199743,29191331&app_id=1
-    $data = array(
-      'type' => 'GET',
-      //'url' => 'https://api.deezer.com/artist/' . $id . '/top',
-      'arguments' => array(
-        //'limit' => $limit,
-      ),
-      'encodeData' => FALSE,
-      'returnHeaders' => FALSE,
-    );
-    $test = 0;
+    $iframe_config = array();
+    $arguments = array();
+
+    if (!empty($trackList)) {
+      foreach ($embedSettings as $key => $value) {
+        $arguments[$key] = $value;
+      }
+      $arguments['id'] = implode(',', $trackList);
+
+      // Only for test
+      // @TODO app_id come from configuration form of this module.
+      $arguments['app_id'] = 1;
+
+      // Only for the test.
+      // @TODO This part need to be set in admin config of module. Not in instance.
+      $iframe_config['scrolling'] = 'no';
+      $iframe_config['frameborder'] = 0;
+      $iframe_config['allowTransparency'] = true;
+
+      // Add width height config for iframe.
+      $iframe_config['width'] = '100%';
+      $iframe_config['height'] = '100%';
+
+      $this->urlConstructParameters($arguments);
+      $this->iframeConstructParameters($iframe_config);
+
+      $this->iframe = '<iframe ' . $this->iframeParameters . ' src="https://www.deezer.com/plugins/player?' . $this->srcParameters . '"></iframe>';
+    }
+  }
+
+  protected function urlConstructParameters($parameters) {
+    $url_query = '';
+    foreach ($parameters as $key => $value) {
+      $url_query .= $key . '=' . $value . '&';
+    }
+    $this->srcParameters = trim($url_query, '&');
+  }
+
+  protected function iframeConstructParameters($params) {
+    $iframe_param = '';
+    foreach ($params as $key => $value) {
+      $iframe_param .= $key . '=' . $value . ' ';
+    }
+    $this->iframeParameters = trim($iframe_param, ' ');
   }
 }
