@@ -688,6 +688,7 @@ function auto_playlist_deezer_close_form($form, &$form_state) {
 function auto_playlist_deezer_paste_form_submit($element_form, &$form_state) {
   $apd_id = $element_form['#apd_id'];
   $instance = $form_state['auto_playlist_deezer'][$apd_id]['instance'];
+  $field_name = $instance['field_name'];
 
   if ($element_form['#op'] == 'add') {
     $delta = 0;
@@ -695,14 +696,14 @@ function auto_playlist_deezer_paste_form_submit($element_form, &$form_state) {
       $delta = max(array_keys($form_state['auto_playlist_deezer'][$apd_id]['values'])) + 1;
     }
     $form_state['auto_playlist_deezer'][$apd_id]['values'][] = array(
-      'value' => $form_state['values']['field_embed_deezer']['und']['form']['field_text_value'],
+      'value' => $form_state['values'][$field_name]['und']['form']['field_text_value'],
       'format' => NULL,
       'weight' => $delta,
     );
   }
   else {
     $delta = $element_form['#apd_row_delta'];
-    $form_state['auto_playlist_deezer'][$apd_id]['values'][$delta]['value'] = $form_state['values']['field_embed_deezer']['und']['values'][$delta]['form']['field_text_value'];
+    $form_state['auto_playlist_deezer'][$apd_id]['values'][$delta]['value'] = $form_state['values'][$field_name]['und']['values'][$delta]['form']['field_text_value'];
   }
 }
 
@@ -1063,9 +1064,11 @@ function auto_playlist_deezer_automatic_form($element_form, $form_state) {
 function auto_playlist_deezer_automatic_form_submit($element_form, &$form_state) {
   $apd_id = $element_form['#apd_id'];
   $settings = $form_state['auto_playlist_deezer'][$apd_id]['settings'];
-  $field_value = $form_state['values']['field_embed_deezer']['und']['form']['field_name_id'];
+  $instance = $form_state['auto_playlist_deezer'][$apd_id]['instance'];
+  $field_name = $instance['field_name'];
 
   if ($element_form['#op'] == 'add') {
+    $field_value = $form_state['values'][$field_name]['und']['form']['field_name_id'];
     $delta = 0;
 
     if (!empty($form_state['auto_playlist_deezer'][$apd_id]['values'])) {
@@ -1083,6 +1086,15 @@ function auto_playlist_deezer_automatic_form_submit($element_form, &$form_state)
     else {
       // @TODO return message to say that we can't save an empty value.
       // @TODO form_set_error or just a error message ?
+    }
+  }
+  else {
+    $delta = $element_form['#apd_row_delta'];
+    $field_value = $form_state['values'][$field_name]['und']['values'][$delta]['form']['field_name_id'];
+    $embed_deezer = auto_playlist_deezer_get_deezer_value($field_value, $settings);
+
+    if (!empty($embed_deezer)) {
+      $form_state['auto_playlist_deezer'][$apd_id]['values'][$delta]['value'] = $embed_deezer;
     }
   }
 }
