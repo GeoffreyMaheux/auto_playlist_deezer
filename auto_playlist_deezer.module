@@ -27,17 +27,6 @@
  */
 
 /**
- * Define Proxy configuration.
- */
-define('PROXY_CONFIGURATION', array(
-  'proxy_server' => variable_get('proxy_server', ''),
-  'proxy_port' => variable_get('proxy_port', 8080),
-  'proxy_username' => variable_get('proxy_username', ''),
-  'proxy_password' => variable_get('proxy_password', ''),
-  'proxy_user_agent' => variable_get('proxy_user_agent', ''),
-));
-
-/**
  * Implements hook_permission().
  */
 function auto_playlist_deezer_permission() {
@@ -1113,10 +1102,18 @@ function auto_playlist_deezer_automatic_form_submit($element_form, &$form_state)
 function auto_playlist_deezer_get_deezer_value($value, $settings) {
   module_load_include('php', 'auto_playlist_deezer', 'includes/AutoPlaylistDeezer');
 
+  $proxy_config = array(
+    'proxy_server' => variable_get('proxy_server', ''),
+    'proxy_port' => variable_get('proxy_port', 8080),
+    'proxy_username' => variable_get('proxy_username', ''),
+    'proxy_password' => variable_get('proxy_password', ''),
+    'proxy_user_agent' => variable_get('proxy_user_agent', ''),
+  );
+
   $deezer_embed_settings = $settings['auto_playlist_deezer']['embed_configuration'];
   $deezer_track_settings = $settings['auto_playlist_deezer']['tracks_configuration'];
 
-  $embed_deezer = new AutoPlaylistDeezer($deezer_embed_settings, $deezer_track_settings, PROXY_CONFIGURATION);
+  $embed_deezer = new AutoPlaylistDeezer($deezer_embed_settings, $deezer_track_settings, $proxy_config);
 
   // First we need to check if the data is a string or int.
   if (is_numeric($value)) {
