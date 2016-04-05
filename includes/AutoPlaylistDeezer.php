@@ -38,7 +38,7 @@ class AutoPlaylistDeezer {
   }
 
   public function getTopTracksListByArtistId($id) {
-    $deezerEmbed = new DeezerApi();
+    $deezerEmbed = new DeezerApi($this->proxyConfig);
 
     // We need to take the list of top tracks od the artist.
     $deezerEmbed->getTopTrackList($id, $this->trackSettings['limit_tracks']);
