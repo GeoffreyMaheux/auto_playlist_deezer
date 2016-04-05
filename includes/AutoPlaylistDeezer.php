@@ -11,16 +11,17 @@ require_once 'DeezerApi.php';
 
 class AutoPlaylistDeezer {
 
-  public function __construct($embed_settings, $track_settings) {
-    $this->embed_settings = $embed_settings;
-    $this->track_settings = $track_settings;
+  public function __construct($embedSettings, $trackSettings, $proxyConfig) {
+    $this->proxyConfig = $proxyConfig;
+    $this->embedSettings = $embedSettings;
+    $this->trackSettings = $trackSettings;
     $this->iframe = '';
     $this->artistId = '';
     $this->listIdTrack = NULL;
   }
 
   public function getTopTracksListByArtistName($name) {
-    $deezerEmbed = new DeezerApi();
+    $deezerEmbed = new DeezerApi($this->proxyConfig);
 
     // We take the artist ID.
     $deezerEmbed->getListArtistId($name);
@@ -29,9 +30,9 @@ class AutoPlaylistDeezer {
     $this->extractFirstArtistId($deezerEmbed);
 
     if (!empty($this->artistId)) {
-      $deezerEmbed->getTopTrackList($this->artistId, $this->track_settings['limit_tracks']);
+      $deezerEmbed->getTopTrackList($this->artistId, $this->trackSettings['limit_tracks']);
       $this->extractIdTrack($deezerEmbed);
-      $deezerEmbed->getEmbedPlaylist($this->embed_settings, $this->listIdTrack);
+      $deezerEmbed->getEmbedPlaylist($this->embedSettings, $this->listIdTrack);
       $this->iframe = $deezerEmbed->iframe;
     }
   }
@@ -40,13 +41,13 @@ class AutoPlaylistDeezer {
     $deezerEmbed = new DeezerApi();
 
     // We need to take the list of top tracks od the artist.
-    $deezerEmbed->getTopTrackList($id, $this->track_settings['limit_tracks']);
+    $deezerEmbed->getTopTrackList($id, $this->trackSettings['limit_tracks']);
 
     // At this moment we just need to collect the list of track's ID.
     $this->extractIdTrack($deezerEmbed);
 
     // Generate the iframe embed Deezer.
-    $deezerEmbed->getEmbedPlaylist($this->embed_settings, $this->listIdTrack);
+    $deezerEmbed->getEmbedPlaylist($this->embedSettings, $this->listIdTrack);
     $this->iframe = $deezerEmbed->iframe;
   }
 

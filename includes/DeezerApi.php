@@ -8,7 +8,8 @@
 
 class DeezerApi {
 
-  public function __construct() {
+  public function __construct($proxyConfig) {
+    $this->proxyConfig = $proxyConfig;
     $this->iframe = '';
     $this->srcParameters = '';
     $this->iframeParameters = '';
@@ -34,6 +35,17 @@ class DeezerApi {
     }
     elseif ($type == 'DELETE') {
       curl_setopt($curlRequest, CURLOPT_CUSTOMREQUEST, "DELETE");
+    }
+
+    if (!empty($this->proxyConfig)) {
+      if (!empty($this->proxyConfig['proxy_server'])) {
+        curl_setopt($curlRequest, CURLOPT_PROXY, $this->proxyConfig['proxy_server']);
+        curl_setopt($curlRequest, CURLOPT_PROXYPORT, $this->proxyConfig['proxy_port']);
+      }
+
+      if (!empty($this->proxyConfig['proxy_username']) && !empty($this->proxyConfig['proxy_passport'])) {
+        curl_setopt($curlRequest, CURLOPT_PROXYUSERPWD, implode(':', array($this->proxyConfig['proxy_username'], $this->proxyConfig['proxy_password'])));
+      }
     }
 
     curl_setopt($curlRequest, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
