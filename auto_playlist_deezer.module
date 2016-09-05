@@ -8,7 +8,7 @@
  * This module create an new field widget for textarea type :
  *   - First : allow user to choose instance configuration of request option
  * for Deezer api like : layout, color, format ...
- *   _ Second : In the add/edit form of an entity, the user can see an new
+ *   - Second : In the add/edit form of an entity, the user can see an new
  * display of textarea field type. The widget add to new action :
  *      - first action : a form with two submit : one to give to the user the
  * possibility to copy and paste the embed code directly in the texterea
@@ -26,18 +26,48 @@
  * This table is cleaning by a cron action if administrator choose this option.
  */
 
+module_load_include('inc', 'auto_playlist_deezer', 'auto_playlist_deezer.field');
+
 /**
  * Implements hook_permission().
  */
 function auto_playlist_deezer_permission() {
-
+  return array(
+    'administer widget playlist deezer' => array(
+      'title' => t('Administer widget playlist deezer'),
+      'description' => t('Allow users to configure the global iframe parameters'),
+    ),
+  );
 }
 
 /**
  * Implements hook_menu().
  */
 function auto_playlist_deezer_menu() {
+  $items = array();
 
+  // Deezer settings.
+  $items['admin/config/deezer'] = array(
+    'title' => 'Deezer',
+    'description' => 'General configuration for deezer.',
+    'position' => 'right',
+    'weight' => 0,
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('access administration pages'),
+    'file'  => '/system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  );
+
+  $items['admin/config/deezer/widget-playlist'] = array(
+    'title' => 'Deezer Widget Playlist',
+    'description' => 'General configuration of widget playlist',
+    'access arguments' => array('administer widget playlist deezer'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('auto_playlist_deezer_config_widget_form'),
+    'file' => 'auto_playlist_deezer.admin.inc',
+  );
+
+  return $items;
 }
 
 /**
@@ -52,450 +82,6 @@ function auto_playlist_deezer_theme() {
       'variables' => array('element' => NULL),
     ),
   );
-}
-
-/**
- * Implements hook_cron().
- */
-function auto_playlist_deezer_cron() {
-
-}
-
-/**
- * Implements hook_field_widget_info().
- */
-function auto_playlist_deezer_field_widget_info() {
-  $widgets = array();
-
-  $widgets['inline_form_playlist_deezer'] = array(
-    'label' => t('Inline form playlist Deezer'),
-    'field types' => array('text_long'),
-    'settings' => array(
-      'rows' => 5,
-      'auto_playlist_deezer' => array(
-        'paste_embed_deezer' => 1,
-        'automatic_embed_deezer' => 0,
-        'embed_configuration' => array(
-          'width' => 600,
-          'height' => 200,
-          'layout' => 'dark',
-          'playlist' => 0,
-          'autoplay' => 0,
-          'format' => 'classic',
-          'size' => 'medium',
-          'type' => 'tracks',
-          'color' => '007FEB',
-        ),
-        'tracks_configuration' => array(
-          'limit_tracks' => 10,
-        ),
-      ),
-    ),
-  );
-
-  return $widgets;
-}
-
-/**
- * Implements hook_field_instance_settings_form().
- */
-function auto_playlist_deezer_field_widget_settings_form($field, $instance) {
-  $widget = $instance['widget'];
-  $settings = $widget['settings'];
-
-  $element = array();
-
-  $element['rows'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Rows'),
-    '#default_value' => $settings['rows'],
-    '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive'),
-  );
-
-  switch ($widget['type']) {
-    case 'inline_form_playlist_deezer' :
-      // Generate the part of form for AUto playlist deezer widget.
-      $element['auto_playlist_deezer'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Auto playlist Deezer widget configuration'),
-      );
-
-      // Checkbox user can copy and paste embed code directly. By default TRUE.
-      $element['auto_playlist_deezer']['paste_embed_deezer'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Allow user to copy and paste directly the embed deezer code in textarea.'),
-        '#default_value' => $settings['auto_playlist_deezer']['paste_embed_deezer'],
-      );
-
-      // Checkbox user can use Deezer API to generate embed code. By default FALSE
-      $element['auto_playlist_deezer']['automatic_embed_deezer'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Allow user to use Deezer API to generate embed code.'),
-        '#default_value' => $settings['auto_playlist_deezer']['automatic_embed_deezer'],
-      );
-
-      // Embed configuration instance field. Group data for the Deezer API Embed.
-      $element['auto_playlist_deezer']['embed_configuration'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Embed configuration for Deezer API'),
-      );
-
-      // Deezer configuration iframe width. By default 600px.
-      $element['auto_playlist_deezer']['embed_configuration']['width'] = array(
-        '#type' => 'textfield',
-        '#title' => t('The width of Iframe.'),
-        '#default_value' => $settings['auto_playlist_deezer']['embed_configuration']['width'],
-        '#element_validate' => array('element_validate_integer_positive'),
-      );
-
-      // Deezer configuration iframe height. By default 200px.
-      $element['auto_playlist_deezer']['embed_configuration']['height'] = array(
-        '#type' => 'textfield',
-        '#title' => t('The height of Iframe.'),
-        '#default_value' => $settings['auto_playlist_deezer']['embed_configuration']['height'],
-        '#element_validate' => array('element_validate_integer_positive'),
-      );
-
-      // Deezer configuration layout. By default dark.
-      $element['auto_playlist_deezer']['embed_configuration']['layout'] = array(
-        '#type' => 'select',
-        '#title' => t('The general layout of the widget'),
-        '#default_value' => $settings['auto_playlist_deezer']['embed_configuration']['layout'],
-        '#options' => array(
-          'dark' => t('Dark'),
-          'light' => t('Light'),
-        ),
-      );
-
-      // Deezer configuration display playlist. By default FALSE.
-      $element['auto_playlist_deezer']['embed_configuration']['playlist'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Display the playlist or not'),
-        '#default_value' => $settings['auto_playlist_deezer']['embed_configuration']['playlist'],
-      );
-
-      // Deezer configuration autoplay. By default FALSE.
-      $element['auto_playlist_deezer']['embed_configuration']['autoplay'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Plays automatically the music after loading.'),
-        '#default_value' => $settings['auto_playlist_deezer']['embed_configuration']['autoplay'],
-      );
-
-      // Deezer configuration format. By default classic.
-      $element['auto_playlist_deezer']['embed_configuration']['format'] = array(
-        '#type' => 'select',
-        '#title' => t('The layout format of the widget'),
-        '#default_value' => $settings['auto_playlist_deezer']['embed_configuration']['format'],
-        '#options' => array(
-          'square' => t('Square'),
-          'classic' => t('Classic'),
-        ),
-      );
-
-      // Deezer configuration size. By default medium.
-      $element['auto_playlist_deezer']['embed_configuration']['size'] = array(
-        '#type' => 'select',
-        '#title' => t('The layout size of the widget'),
-        '#default_value' => $settings['auto_playlist_deezer']['embed_configuration']['size'],
-        '#options' => array(
-          'small' => t('Small'),
-          'medium' => t('Medium'),
-          'big' => t('Big'),
-        ),
-      );
-
-      // Deezer configuration type. By default tracks.
-      $element['auto_playlist_deezer']['embed_configuration']['type'] = array(
-        '#type' => 'select',
-        '#title' => t('The type of music you want to play'),
-        '#default_value' => $settings['auto_playlist_deezer']['embed_configuration']['type'],
-        '#options' => array(
-          'playlist' => t('Playlist'),
-          'album' => t('Album'),
-          'tracks' => t('Tracks'),
-          'charts' => t('Charts'),
-          'favorites' => t('Favorites'),
-        ),
-      );
-
-      // Deezer configuration color. By default 007FEB.
-      $element['auto_playlist_deezer']['embed_configuration']['color'] = array(
-        '#type' => 'textfield',
-        '#title' => t('The general color of the widget. Has to be a hexadecimal value without the #'),
-        '#default_value' => $settings['auto_playlist_deezer']['embed_configuration']['color'],
-      );
-
-      // Tracks configuration instance field. Group data for the Deezer API.
-      $element['auto_playlist_deezer']['tracks_configuration'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Tracks configuration for Deezer API'),
-      );
-
-      // Deezer configuration limit tracks. By default 10.
-      $element['auto_playlist_deezer']['tracks_configuration']['limit_tracks'] = array(
-        '#type' => 'textfield',
-        '#title' => t('The number limit of tracks that you want to show in the playlist.'),
-        '#default_value' => $settings['auto_playlist_deezer']['tracks_configuration']['limit_tracks'],
-      );
-
-      break;
-  }
-
-  return $element;
-}
-
-/**
- * Implements hook_field_widget_form().
- */
-function auto_playlist_deezer_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-  $widget = $instance['widget'];
-  $settings = $widget['settings'];
-
-  switch ($widget['type']) {
-    case 'inline_form_playlist_deezer':
-      // Build parents array for the element's widget.
-      $parents = array_merge($element['#field_parents'], array($element['#field_name'], $element['#language']));
-
-      // Get langcode of the parent entity.
-      $parent_langcode = entity_language($element['#entity_type'], $element['#entity']);
-
-      // Assign a unique identifier to each auto playlist deezer widget.
-      // Use sha1() because $parents can be long.
-      $apd_id = sha1(implode('-', $parents));
-
-      // Create the wrapper ID for the element.
-      $wrapper = 'automatic-playlist-deezer-' . $apd_id;
-
-      $element = array(
-          '#type' => 'fieldset',
-          '#tree' => TRUE,
-          '#description' => filter_xss_admin($instance['description']),
-          '#prefix' => '<div id="' . $wrapper . '">',
-          '#suffix' => '</div>',
-          '#apd_id' => $apd_id,
-          '#apd_root' => TRUE,
-      ) + $element;
-
-      // Initialize the auto playlist deezer array in form state.
-      if (empty($form_state['auto_playlist_deezer'][$apd_id])) {
-        $form_state['auto_playlist_deezer'][$apd_id] = array(
-          'form' => NULL,
-          'settings' => $settings,
-          'instance' => $instance,
-        );
-
-        // Load data from $items variable.
-        $form_state['auto_playlist_deezer'][$apd_id]['values'] = array();
-
-        $delta = 0;
-        foreach ($items as $item) {
-          $form_state['auto_playlist_deezer'][$apd_id]['values'][$delta] = array(
-            'value' => $item['value'],
-            'weight' => $delta,
-            'form' => NULL,
-          );
-          $delta++;
-        }
-      }
-
-      // Start to prepare the render of form value in form field.
-      $element['values'] = array(
-        '#tree' => TRUE,
-        '#theme' => 'auto_playlist_deezer_theme_values_element',
-      );
-
-      $weight_delta = max(ceil(count($form_state['auto_playlist_deezer'][$apd_id]['values']) * 1.2), 50);
-      foreach ($form_state['auto_playlist_deezer'][$apd_id]['values'] as $key => $info) {
-        $element['values'][$key]['#info_value'] = $info['value'];
-        $element['values'][$key]['#weight'] = $info['weight'];
-
-        if (!empty($info['form'])) {
-          $element['values'][$key]['delta'] = array(
-            '#type' => 'value',
-            '#value' => $info['weight'],
-          );
-
-          $element['values'][$key]['form'] = array(
-            '#type' => 'container',
-            '#attributes' => array('class' => array('apd-form', 'apd-form-row')),
-            '#op' => $info['form'],
-            '#parents' => array_merge($parents, array('values', $key, 'form')),
-            '#parent_language' => $parent_langcode,
-            '#apd_id' => $apd_id,
-            '#apd_row_delta' => $key,
-          );
-
-          $form_element = &$element['values'][$key]['form'];
-
-          // Add the appopriate form.
-          if ($info['form'] == 'manual_edit') {
-            $form_element += auto_playlist_deezer_paste_form($form_element, $form_state, $info['value']);
-          }
-          elseif ($info['form'] == 'automatic_edit') {
-            $form_element += auto_playlist_deezer_automatic_form($form_element, $form_state);
-          }
-          elseif ($info['form'] == 'remove') {
-            $form_element += auto_playlist_deezer_remove_form($form_element, $form_state);
-          }
-        }
-        else {
-          $row = &$element['values'][$key];
-          $row['delta'] = array(
-            '#type' => 'weight',
-            '#deltat' => $weight_delta,
-            '#default_value' => $info['weight'],
-            '#attributes' => array('class' => array('apd-values-delta')),
-          );
-
-          // Add container action.
-          $row['actions'] = array(
-            '#type' => 'container',
-            '#attributes' => array('class' => array('apd-container-form-operations')),
-          );
-
-          // Add the Manual edit action for value element row.
-          $row['actions']['apd_value_manual_edit'] = array(
-            '#type' => 'submit',
-            '#value' => t('Manual editing'),
-            '#limit_validation_errors' => array(),
-            '#name' => 'apd-' . $apd_id . '-values-manual-edit-' . $key,
-            '#ajax' => array(
-              'callback' => 'auto_playlist_deezer_ajax_get_element',
-              'wrapper' => $wrapper
-            ),
-            '#submit' => array('auto_playlist_deezer_open_row_element'),
-            '#apd_row_delta' => $key,
-            '#apd_row_form' => 'manual_edit',
-          );
-
-          // Add the Automatic edit action for value element row.
-          $row['actions']['apd_value_automatic_edit'] = array(
-            '#type' => 'submit',
-            '#value' => t('Automatic editing'),
-            '#limit_validation_errors' => array(),
-            '#name' => 'apd-' . $apd_id . '-values-automatic-edit-' . $key,
-            '#ajax' => array(
-              'callback' => 'auto_playlist_deezer_ajax_get_element',
-              'wrapper' => $wrapper
-            ),
-            '#submit' => array('auto_playlist_deezer_open_row_element'),
-            '#apd_row_delta' => $key,
-            '#apd_row_form' => 'automatic_edit',
-          );
-
-          // Add the delete action for value element row.
-          $row['actions']['apd_value_delete'] = array(
-            '#type' => 'submit',
-            '#value' => t('Remove'),
-            '#limit_validation_errors' => array(),
-            '#name' => 'apd-' . $apd_id . '-values-remove-' . $key,
-            '#ajax' => array(
-              'callback' => 'auto_playlist_deezer_ajax_get_element',
-              'wrapper' => $wrapper
-            ),
-            '#submit' => array('auto_playlist_deezer_open_row_element'),
-            '#apd_row_delta' => $key,
-            '#apd_row_form' => 'remove',
-          );
-        }
-      }
-
-      // If cardinality equals number of items return form.
-      if ($field['cardinality'] > 0 && $field['cardinality'] == count($form_state['auto_playlist_deezer'][$apd_id]['values'])) {
-        return $element;
-      }
-
-      // Test if we need to load specific form.
-      if (empty($form_state['auto_playlist_deezer'][$apd_id]['form'])) {
-        if ($settings['auto_playlist_deezer']['paste_embed_deezer']) {
-          $element['action']['paste_embed_deezer'] = array(
-            '#type' => 'submit',
-            '#value' => t('Paste embed deezer code'),
-            '#name' => 'apd-' . $apd_id . '-paste',
-            '#ajax' => array(
-              'callback' => 'auto_playlist_deezer_ajax_get_element',
-              'wrapper' => $wrapper
-            ),
-            '#limit_validation_errors' => array(),
-            '#submit' => array('auto_playlist_deezer_open_automatic_form'),
-            '#apd_form' => 'apd_paste',
-          );
-        }
-
-        if ($settings['auto_playlist_deezer']['automatic_embed_deezer']) {
-          $element['action']['automatic_embed_deezer'] = array(
-            '#type' => 'submit',
-            '#value' => t('Automatic embed deezer code'),
-            '#name' => 'apd-' . $apd_id . '-automatic',
-            '#ajax' => array(
-              'callback' => 'auto_playlist_deezer_ajax_get_element',
-              'wrapper' => $wrapper
-            ),
-            '#limit_validation_errors' => array(),
-            '#submit' => array('auto_playlist_deezer_open_automatic_form'),
-            '#apd_form' => 'apd_automatic',
-          );
-        }
-      }
-      else {
-        $element['form'] = array(
-          '#type' => 'fieldset',
-          '#attributes' => array('class' => array('apd-form', 'apd-form-bottom')),
-          '#parents' => array_merge($parents, array('form')),
-          '#apd_id' => $apd_id,
-          '#parent_language' => $parent_langcode,
-          '#entity_type' => $instance['entity_type'],
-        );
-
-        // When action form is paste or edit we just need to load a
-        // textarea field.
-        if ($form_state['auto_playlist_deezer'][$apd_id]['form'] == 'apd_paste') {
-          $element['form']['#op'] = 'add';
-          $element['form'] += auto_playlist_deezer_paste_form($element['form'], $form_state);
-        }
-        // When action form is automatic embed or edit automatic we load
-        // new form with textfield and submit action.
-        if ($form_state['auto_playlist_deezer'][$apd_id]['form'] == 'apd_automatic') {
-          $element['form']['#op'] = 'add';
-          $element['form'] += auto_playlist_deezer_automatic_form($element['form'], $form_state);
-        }
-      }
-      break;
-  }
-
-  return $element;
-}
-
-/**
- * Implements hook_field_formatter_info().
- */
-function auto_playlist_deezer_field_formatter_info() {
-  return array(
-    'auto_playlist_deezer_embed' => array(
-      'label' => t('Auto playlist Deezer Embed'),
-      'field types' => array('text_long'),
-    ),
-  );
-}
-
-/**
- * Implements hook_field_formatter_view().
- */
-function auto_playlist_deezer_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-  $element = array();
-
-  switch ($display['type']) {
-    case 'auto_playlist_deezer_embed' :
-      foreach ($items as $item) {
-        $element[] = array(
-          '#theme' => 'auto_playlist_deezer_display_iframe',
-          '#element' => $item['value'],
-        );
-      }
-      break;
-  }
-  return $element;
 }
 
 /**
@@ -591,30 +177,28 @@ function auto_playlist_deezer_field_attach_submit($parent_entity_type, $parent_e
   }
 }
 
-function auto_playlist_deezer_paste_form($element_form, &$form_state, $default_value = NULL) {
+function auto_playlist_deezer_manually_form($element_form, &$form_state, $default_value = NULL) {
   $settings = $form_state['auto_playlist_deezer'][$element_form['#apd_id']]['settings'];
-
+  $settings_embed_config = $settings['auto_playlist_deezer']['embed_configuration'];
   $delta = $element_form['#apd_id'];
+
   if ($element_form['#op'] == 'add') {
-    $element_form['#title'] = t('Paste the embed deezer code.');
-    $element_form['#description'] = t('Copy from deezer the embed code that you want to add in this field.');
+    $element_form['#title'] = t('Manually generate the embed deezer code.');
+    $element_form['#description'] = t('Choose all options to personalize the player to embed.');
     $submit_value = t('Create embed Deezer');
   }
   elseif ($element_form['#op'] == 'manual_edit') {
     $element_form['#title'] = t('Update the embed deezer code.');
     $delta .= '-' . $element_form['#apd_row_delta'];
-    $element_form['#description'] = t('Copy from deezer the embed code that you want to replace in this field.');
+    $element_form['#description'] = t('Choose all options to personalize the player to embed.');
     $submit_value = t('Update embed Deezer');
   }
 
-  $element_form['field_text_value'] = array(
-    '#title' => $element_form['#title'],
-    '#description' => $element_form['#description'],
-    '#type' => 'textarea',
-    '#rows' => $settings['rows'],
-    '#default_values' => isset($default_value) ? $default_value : '',
-    '#attributes' => array('class' => array('text-full')),
-  );
+  if (!empty($default_value)) {
+    $settings_embed_config = auto_playlist_extract_embed_config($default_value);
+  }
+
+  auto_playlist_deezer_config_iframe_form($element_form, $settings_embed_config);
 
   // Form action part.
   $element_form['actions'] = array(
@@ -627,7 +211,7 @@ function auto_playlist_deezer_paste_form($element_form, &$form_state, $default_v
     '#value' => $submit_value,
     '#name' => 'apd-' . $element_form['#op'] . '-submit-' . $delta,
     '#limit_validation_errors' => array($element_form['#parents']),
-    '#attributes' => array('class' => array('apd-paste-submit')),
+    '#attributes' => array('class' => array('apd-manually-submit')),
     '#ajax' => array(
       'callback' => 'auto_playlist_deezer_ajax_get_element',
       'wrapper' => 'automatic-playlist-deezer-' . $element_form['#apd_id'],
@@ -638,7 +222,7 @@ function auto_playlist_deezer_paste_form($element_form, &$form_state, $default_v
     '#value' => t('Cancel'),
     '#name' => 'apd-' . $element_form['#op'] . '-cancel-' . $delta,
     '#limit_validation_errors' => array(),
-    '#attributes' => array('class' => array('apd-paste-cancel')),
+    '#attributes' => array('class' => array('apd-manually-cancel')),
     '#ajax' => array(
       'callback' => 'auto_playlist_deezer_ajax_get_element',
       'wrapper' => 'automatic-playlist-deezer-' . $element_form['#apd_id'],
@@ -671,7 +255,7 @@ function auto_playlist_deezer_paste_form($element_form, &$form_state, $default_v
     );
   }
 
-  $element_form['#apd_element_submit'][] = 'auto_playlist_deezer_paste_form_submit';
+  $element_form['#apd_element_submit'][] = 'auto_playlist_deezer_manually_form_submit';
   $element_form['#pre_render'][] = 'auto_display_deezer_pre_render_fieldset_markup';
 
   return $element_form;
@@ -685,7 +269,7 @@ function auto_playlist_deezer_close_form($form, &$form_state) {
   $form_state['auto_playlist_deezer'][$apd_id]['form'] = NULL;
 }
 
-function auto_playlist_deezer_paste_form_submit($element_form, &$form_state) {
+function auto_playlist_deezer_manually_form_submit($element_form, &$form_state) {
   $apd_id = $element_form['#apd_id'];
   $instance = $form_state['auto_playlist_deezer'][$apd_id]['instance'];
   $field_name = $instance['field_name'];
@@ -705,6 +289,102 @@ function auto_playlist_deezer_paste_form_submit($element_form, &$form_state) {
     $delta = $element_form['#apd_row_delta'];
     $form_state['auto_playlist_deezer'][$apd_id]['values'][$delta]['value'] = $form_state['values'][$field_name]['und']['values'][$delta]['form']['field_text_value'];
   }
+}
+
+function auto_playlist_deezer_config_iframe_form(&$element, $settings = array()) {
+  // Deezer configuration type. By default tracks.
+  $element['auto_playlist_deezer']['embed_configuration']['type'] = array(
+    '#type' => 'select',
+    '#title' => t('The type of music you want to play'),
+    '#default_value' => isset($settings['type']) ? $settings['type'] : '',
+    '#options' => auto_playlist_deezer_get_type(),
+  );
+
+  // Deezer configuration iframe width. By default 600px.
+  $element['auto_playlist_deezer']['embed_configuration']['width'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#maxlength' => 4,
+    '#title' => t('	The width of the widget.'),
+    '#default_value' => isset($settings['width']) ? $settings['width'] : '',
+    '#element_validate' => array('element_validate_integer_positive'),
+  );
+
+  // Deezer configuration iframe height. By default 200px.
+  $element['auto_playlist_deezer']['embed_configuration']['height'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#maxlength' => 4,
+    '#title' => t('The height of the widget.'),
+    '#default_value' => isset($settings['height']) ? $settings['height'] : '',
+    '#element_validate' => array('element_validate_integer_positive'),
+  );
+
+  // Deezer configuration layout. By default dark.
+  $element['auto_playlist_deezer']['embed_configuration']['layout'] = array(
+    '#type' => 'select',
+    '#title' => t('The general layout of the widget'),
+    '#default_value' => isset($settings['layout']) ? $settings['layout'] : '',
+    '#options' => array(
+      'dark' => t('Dark'),
+      'light' => t('Light'),
+    ),
+  );
+
+  // Deezer configuration display playlist. By default FALSE.
+  $element['auto_playlist_deezer']['embed_configuration']['playlist'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display the playlist or not'),
+    '#default_value' => isset($settings['playlist']) ? $settings['playlist'] : '',
+  );
+
+  // Deezer configuration autoplay. By default FALSE.
+  $element['auto_playlist_deezer']['embed_configuration']['autoplay'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Plays automatically the music after loading.'),
+    '#default_value' => isset($settings['autoplay']) ? $settings['autoplay'] : '',
+  );
+
+  // Deezer configuration format. By default classic.
+  $element['auto_playlist_deezer']['embed_configuration']['format'] = array(
+    '#prefix' => '<div class="auto-playlist-deezer-format-wrapper">',
+    '#suffix' => '</div>',
+    '#type' => 'select',
+    '#title' => t('The layout format of the widget'),
+    '#default_value' => isset($settings['format']) ? $settings['format'] : '',
+    '#options' => array(
+      'square' => t('Square'),
+      'classic' => t('Classic'),
+    ),
+    '#attached' => array(
+      'js' =>array(
+        drupal_get_path('module', 'auto_playlist_deezer') . '/js/auto_plylist_deezer.js',
+      ),
+    ),
+  );
+
+  // Deezer configuration size. By default medium.
+  $element['auto_playlist_deezer']['embed_configuration']['size'] = array(
+    '#prefix' => '<div class="auto-playlist-deezer-size-wrapper">',
+    '#suffix' => '</div>',
+    '#type' => 'select',
+    '#title' => t('The layout size of the widget'),
+    '#default_value' => isset($settings['size']) ? $settings['size'] : '',
+    '#options' => array(
+      'small' => t('Small'),
+      'medium' => t('Medium'),
+      'big' => t('Big'),
+    ),
+  );
+
+  // Deezer configuration color. By default 007FEB.
+  $element['auto_playlist_deezer']['embed_configuration']['color'] = array(
+    '#type' => 'textfield',
+    '#size' => 6,
+    '#maxlength' => 6,
+    '#title' => t('The general color of the widget. Has to be a hexadecimal value without the #'),
+    '#default_value' => isset($settings['color']) ? $settings['color'] : '',
+  );
 }
 
 /**
@@ -1127,4 +807,39 @@ function auto_playlist_deezer_get_deezer_value($value, $settings) {
   }
 
   return $embed_deezer->iframe;
+}
+
+/**
+ * Helper : return the list of deezer music type for select list options.
+ */
+function auto_playlist_deezer_get_type() {
+  return array(
+    'playlist' => t('Playlist'),
+    'album' => t('Album'),
+    'tracks' => t('Tracks'),
+    'podcast' => t('Podcast'),
+    'episodes' => t('Episodes'),
+    'radio' => t('Mix'),
+    'charts' => t('Charts'),
+  );
+}
+
+/**
+ * Helper : Extract all configuration of the iframe.
+ */
+function auto_playlist_extract_embed_config($value) {
+  $settings = array();
+
+  if (!empty($value)) {
+    if (preg_match('/src="(.*?)"/', $value, $matches)) {
+      if (!empty($matches[1])) {
+        $url_parsed = drupal_parse_url($matches[1]);
+        if (!empty($url_parsed['query'])) {
+          $settings = $url_parsed['query'];
+        }
+      }
+    }
+  }
+
+  return $settings;
 }

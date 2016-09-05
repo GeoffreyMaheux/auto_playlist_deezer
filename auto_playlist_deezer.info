@@ -1,3 +1,5 @@
 name = Automatic Playlist Deezer
 description = Allow user to generate automatic playlist Deezer for a given artist name or ID from Deezer.
 core = 7.x
+
+configure = admin/config/deezer
